@@ -3,7 +3,7 @@ function Replayer(midiFile, synth) {
 	var beatsPerMinute = 120;
 	var ticksPerBeat = midiFile.header.ticksPerBeat;
 	var channelCount = 16;
-	
+
 	for (var i = 0; i < midiFile.tracks.length; i++) {
 		trackStates[i] = {
 			'nextEventIndex': 0,
@@ -14,13 +14,14 @@ function Replayer(midiFile, synth) {
 			)
 		};
 	}
-	
+
 	function Channel() {
-		
+
 		var generatorsByNote = {};
 		var currentProgram = PianoProgram;
-		
+
 		function noteOn(note, velocity) {
+            console.log('noteOn', note);
 			if (generatorsByNote[note] && !generatorsByNote[note].released) {
 				/* playing same note before releasing the last one. BOO */
 				generatorsByNote[note].noteOff(); /* TODO: check whether we ought to be passing a velocity in */
@@ -30,6 +31,7 @@ function Replayer(midiFile, synth) {
 			generatorsByNote[note] = generator;
 		}
 		function noteOff(note, velocity) {
+            console.log('noteOff', note);
 			if (generatorsByNote[note] && !generatorsByNote[note].released) {
 				generatorsByNote[note].noteOff(velocity);
 			}
@@ -37,27 +39,27 @@ function Replayer(midiFile, synth) {
 		function setProgram(programNumber) {
 			currentProgram = PROGRAMS[programNumber] || PianoProgram;
 		}
-		
+
 		return {
 			'noteOn': noteOn,
 			'noteOff': noteOff,
 			'setProgram': setProgram
 		}
 	}
-	
+
 	var channels = [];
 	for (var i = 0; i < channelCount; i++) {
 		channels[i] = Channel();
 	}
-	
+
 	var nextEventInfo;
 	var samplesToNextEvent = 0;
-	
+
 	function getNextEvent() {
 		var ticksToNextEvent = null;
 		var nextEventTrack = null;
 		var nextEventIndex = null;
-		
+
 		for (var i = 0; i < trackStates.length; i++) {
 			if (
 				trackStates[i].ticksToNextEvent != null
@@ -97,14 +99,14 @@ function Replayer(midiFile, synth) {
 			self.finished = true;
 		}
 	}
-	
+
 	getNextEvent();
-	
+
 	function generate(samples) {
 		var data = new Array(samples*2);
 		var samplesRemaining = samples;
 		var dataOffset = 0;
-		
+
 		while (true) {
 			if (samplesToNextEvent != null && samplesToNextEvent <= samplesRemaining) {
 				/* generate samplesToNextEvent samples, process event and repeat */
@@ -115,7 +117,7 @@ function Replayer(midiFile, synth) {
 					samplesRemaining -= samplesToGenerate;
 					samplesToNextEvent -= samplesToGenerate;
 				}
-				
+
 				handleEvent();
 				getNextEvent();
 			} else {
@@ -129,7 +131,7 @@ function Replayer(midiFile, synth) {
 		}
 		return data;
 	}
-	
+
 	function handleEvent() {
 		var event = nextEventInfo.event;
 		switch (event.type) {
@@ -155,13 +157,13 @@ function Replayer(midiFile, synth) {
 				break;
 		}
 	}
-	
+
 	function replay(audio) {
 		console.log('replay');
 		audio.write(generate(44100));
 		setTimeout(function() {replay(audio)}, 10);
 	}
-	
+
 	var self = {
 		'replay': replay,
 		'generate': generate,
