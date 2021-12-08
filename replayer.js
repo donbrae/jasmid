@@ -22,7 +22,6 @@ function Replayer(midiFile, synth) {
 
 		function noteOn(note, velocity) {
             console.log('noteOn', note);
-            return;
 			if (generatorsByNote[note] && !generatorsByNote[note].released) {
 				/* playing same note before releasing the last one. BOO */
 				generatorsByNote[note].noteOff(); /* TODO: check whether we ought to be passing a velocity in */
@@ -33,7 +32,6 @@ function Replayer(midiFile, synth) {
 		}
 		function noteOff(note, velocity) {
             console.log('noteOff', note);
-            return;
 			if (generatorsByNote[note] && !generatorsByNote[note].released) {
 				generatorsByNote[note].noteOff(velocity);
 			}
@@ -105,9 +103,6 @@ function Replayer(midiFile, synth) {
 	getNextEvent();
 
 	function generate(samples) {
-        // handleEvent();
-        // getNextEvent();
-        // return;
 		var data = new Array(samples*2);
 		var samplesRemaining = samples;
 		var dataOffset = 0;
